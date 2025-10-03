@@ -1,0 +1,273 @@
+--- git status ---
+On branch testing
+Your branch is up to date with 'origin/testing'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/config/__init__.py
+	modified:   source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/config/flat_env_cfg.py
+	modified:   source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/go1_arm_lab_env_cfg.py
+	modified:   source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/__init__.py
+	modified:   source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/commands.py
+	modified:   source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/velocity_command.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	saved_weights/good_flat/
+	scripts/zero_agent.py.save
+	source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/eval.py
+	source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/warmup.py
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/config/__init__.py b/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/config/__init__.py
+index b728315..ea239ce 100644
+--- a/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/config/__init__.py
++++ b/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/config/__init__.py
+@@ -21,6 +21,26 @@ gym.register(
+     },
+ )
+ 
++gym.register(
++    id="Isaac-widowgo1-flat-freeze",
++    entry_point="go1_arm_lab.env.manager_env:ManagerRLEnv",
++    disable_env_checker=True,
++    kwargs={
++        "env_cfg_entry_point": f"{__name__}.flat_env_cfg:Go1ArmFlatFreezeEnvCfg",
++        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:Go1ArmFlatPPORunnerCfg",
++    },
++)
++
++gym.register(
++    id="Isaac-widowgo1-flat-eval",
++    entry_point="go1_arm_lab.env.manager_env:ManagerRLEnv",
++    disable_env_checker=True,
++    kwargs={
++        "env_cfg_entry_point": f"{__name__}.flat_env_cfg:Go1ArmFlatEvalEnvCfg",
++        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:Go1ArmFlatPPORunnerCfg",
++    },
++)
++
+ gym.register(
+     id="Isaac-widowgo1-flat-play",
+     entry_point="go1_arm_lab.env.manager_env:ManagerRLEnv",
+diff --git a/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/config/flat_env_cfg.py b/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/config/flat_env_cfg.py
+index 75a049a..82d390d 100644
+--- a/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/config/flat_env_cfg.py
++++ b/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/config/flat_env_cfg.py
+@@ -5,10 +5,34 @@
+ 
+ from isaaclab.utils import configclass
+ 
+-
+ from go1_arm_lab.tasks.manager_based.go1_arm_lab.go1_arm_lab_env_cfg import LocomotionVelocityEnvCfg
+ from go1_arm_lab.assets.widowgo1 import WIDOW_GO1_CFG
++import go1_arm_lab.tasks.manager_based.go1_arm_lab.mdp as mdp
++from isaaclab.managers import EventTermCfg
++
++from dataclasses import field
+ 
++@configclass
++class WarmupCfg:
++    enabled: bool = False
++    num_steps: int = 8000 #5000
++    suppress_leg_rewards: bool = True
++    leg_joint_targets: dict[str, float] = field(
++        default_factory=lambda: {
++            "FR_hip_joint": -0.1,
++            "FR_thigh_joint": 0.8,
++            "FR_calf_joint": -1.5,
++            "FL_hip_joint": 0.1,
++            "FL_thigh_joint": 0.8,
++            "FL_calf_joint": -1.5,
++            "RR_hip_joint": -0.1,
++            "RR_thigh_joint": 1.0,
++            "RR_calf_joint": -1.5,
++            "RL_hip_joint": 0.1,
++            "RL_thigh_joint": 1.0,
++            "RL_calf_joint": -1.5,
++        }
++    )
+ 
+ @configclass
+ class Go1ArmFlatEnvCfg(LocomotionVelocityEnvCfg):
+@@ -17,6 +41,11 @@ class Go1ArmFlatEnvCfg(LocomotionVelocityEnvCfg):
+     def __post_init__(self):
+         # post init of parent
+         super().__post_init__()
++        
++        self.warmup = WarmupCfg() # NEW
++        self.warmup.enabled = False # NEW
++        self.warmup.suppress_leg_rewards = False # NEW
++
+         self.scene.robot = WIDOW_GO1_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+ 
+         # event
+@@ -52,8 +81,8 @@ class Go1ArmFlatEnvCfg(LocomotionVelocityEnvCfg):
+         # arm
+         self.rewards.end_effector_position_tracking.weight = 5.0 #3
+         self.rewards.end_effector_orientation_tracking.weight = -2.0
+-        self.rewards.end_effector_action_rate.weight = -0.05 #-0.005 
+-        self.rewards.end_effector_action_smoothness.weight = -1.5 #-0.1
++        self.rewards.end_effector_action_rate.weight = -0.1 #-0.005 
++        self.rewards.end_effector_action_smoothness.weight = -2.0 #-0.1
+         
+         # leg
+         self.rewards.tracking_lin_vel_x_l1.weight = 3.5
+@@ -75,7 +104,7 @@ class Go1ArmFlatEnvCfg(LocomotionVelocityEnvCfg):
+         self.rewards.joint_deviation.weight = -0.01
+         self.rewards.action_smoothness.weight = -0.02
+         self.rewards.height_reward.weight = -2.0
+-        self.rewards.flat_orientation_l2.weight = -1.5 #-1.0
++        self.rewards.flat_orientation_l2.weight = -2.0 #-1.0
+ 
+         # new rewards added: 
+         self.rewards.feet_air_time_variance.weight = -2.5 #-2.0
+@@ -83,6 +112,52 @@ class Go1ArmFlatEnvCfg(LocomotionVelocityEnvCfg):
+         self.rewards.feet_gait.weight = 4.0 #0.5
+         self.rewards.feet_gait.params["synced_feet_pair_names"] = (("FL_foot", "RR_foot"), ("FR_foot", "RL_foot"))
+ 
++@configclass
++class Go1ArmFlatFreezeEnvCfg(Go1ArmFlatEnvCfg):
++    # params for new rewards here
++    foot_link_name = ".*_foot"
++    def __post_init__(self):
++        # post init of parent
++        super().__post_init__()
++        self.warmup.enabled = True # NEW
++        self.warmup.suppress_leg_rewards = True # NEW
++        self.commands.base_velocity.is_Go1Arm = True # NEW
++        self.events.reset_robot_joints.func = mdp.reset_joints_preserve_legs
++        self.events.reset_base.func = mdp.reset_base_preserve_pose
++
++
++@configclass
++class Go1ArmFlatEvalEnvCfg(Go1ArmFlatEnvCfg):
++    """Stationary-base eval: resample EE pose every 3s and print mean error."""
++    def __post_init__(self):
++        super().__post_init__()
++
++        # 32 envs for evaluation
++        self.scene.num_envs = 32
++
++        # keep base stationary
++        self.commands.base_velocity.ranges.lin_vel_x = (0.0, 0.0)
++        self.commands.base_velocity.ranges.lin_vel_y = (0.0, 0.0)
++        self.commands.base_velocity.ranges.ang_vel_z = (0.0, 0.0)
++        self.commands.base_velocity.rel_standing_envs = 1.0
++        self.commands.base_velocity.resampling_time_range = (3.0, 3.0)  # not critical since ranges are zero
++
++        # resample EE target every 2 seconds
++        self.commands.ee_pose.resampling_time_range = (2.0, 2.0)
++
++        # turn off disturbances
++        self.events.base_external_force_torque = None
++        self.events.push_robot = None
++
++        # add an interval event to print mean EE error (aligns with EE resample interval)
++        self.events.print_mean_ee_pos_error = EventTermCfg(  # type: ignore[attr-defined]
++            func=mdp.print_mean_ee_pos_error,
++            mode="interval",
++            interval_range_s=(3.0, 3.0),
++            params={},
++        )
++
++
+ 
+ class Go1ArmFlatEnvCfg_PLAY(Go1ArmFlatEnvCfg):
+     def __post_init__(self) -> None:
+diff --git a/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/go1_arm_lab_env_cfg.py b/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/go1_arm_lab_env_cfg.py
+index 673e23f..8101597 100644
+--- a/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/go1_arm_lab_env_cfg.py
++++ b/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/go1_arm_lab_env_cfg.py
+@@ -200,6 +200,7 @@ class EventCfg:
+         params={"velocity_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5)}},
+     )
+ 
++
+ ##
+ # MDP settings
+ ##
+diff --git a/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/__init__.py b/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/__init__.py
+index e540b83..2f9eb0f 100644
+--- a/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/__init__.py
++++ b/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/__init__.py
+@@ -23,3 +23,5 @@ from .observations import *
+ from .pose_command import UniformPoseCommand
+ from .commands import *  # noqa: F401, F403
+ from .velocity_command import UniformVelocityCommand 
++from .warmup import warmup_hold_go1_leg_pose, reset_joints_preserve_legs, reset_base_preserve_pose
++from .eval import print_mean_ee_pos_error
+diff --git a/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/commands.py b/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/commands.py
+index a3aefe8..bf42725 100644
+--- a/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/commands.py
++++ b/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/commands.py
+@@ -360,11 +360,16 @@ class HemispherePoseCommand(CommandTerm):
+     # ----------------------------
+     def _progress_scalar(self) -> torch.Tensor:
+         """Return a scalar s in [0, 1] for curriculum blending; 0 disables."""
++        warmup = getattr(self.env.cfg, "warmup", None) # NEW
++        warmup_steps = getattr(warmup, "num_steps", 0) if getattr(warmup, "enabled", False) else 0 # NEW
++
+         coeff = float(getattr(self.cfg, "curriculum_coeff", 0.0) or 0.0)
+         if coeff <= 0.0:
+             return torch.tensor(0.0, device=self.device)
+-
+-        steps_total = float(getattr(self.env, "common_step_counter", 0))
++        
++        # steps_total = float(getattr(self.env, "common_step_counter", 0))
++        steps_total = max(0.0, float(getattr(self.env, "common_step_counter", 0)) - float(warmup_steps)) # NEW
++        
+         steps_per_env = float(
+             getattr(self, "num_env_step", getattr(self.cfg, "num_steps_per_env", self._num_steps_per_env_default))
+         )
+diff --git a/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/velocity_command.py b/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/velocity_command.py
+index 5c0cfe2..1fd3d2b 100644
+--- a/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/velocity_command.py
++++ b/source/go1_arm_lab/go1_arm_lab/tasks/manager_based/go1_arm_lab/mdp/velocity_command.py
+@@ -14,6 +14,7 @@ from isaaclab.assets import Articulation
+ from isaaclab.managers import CommandTerm
+ from isaaclab.markers import VisualizationMarkers
+ from go1_arm_lab.tasks.manager_based.go1_arm_lab.config.agents.rsl_rl_ppo_cfg import Go1ArmFlatPPORunnerCfg, Go1ArmRoughPPORunnerCfg
++from .warmup import warmup_hold_go1_leg_pose
+ 
+ if TYPE_CHECKING:
+     from go1_arm_lab.env.manager_env import ManagerBasedRLEnv
+@@ -128,10 +129,23 @@ class UniformVelocityCommand(CommandTerm):
+         )
+ 
+     def _resample_command(self, env_ids: Sequence[int]):
+-        
+         r = torch.empty(len(env_ids), device=self.device)
++        #======================================================new=======================================================
++        warmup = getattr(self.env.cfg, "warmup", None)
++        warmup_enabled = bool(warmup and warmup.enabled)
++        warmup_steps = warmup.num_steps if warmup_enabled else 0
++
++        if warmup_enabled and self.env.common_step_counter < warmup.num_steps:
++            self.vel_command_b[env_ids] = 0.0
++            self.is_heading_env[env_ids] = False
++            self.is_standing_env[env_ids] = True
++            return
++        effective_step = max(0, self.env.common_step_counter - warmup_steps)
++        #======================================================new=======================================================
+         if self.cfg.is_Go1Arm:
+-            count = torch.tensor(self.env.common_step_counter / self.num_env_step / self.cfg.curriculum_coeff)
++            denom = max(1.0, float(self.num_env_step) * float(self.cfg.curriculum_coeff)) # NEW
++            # count = torch.tensor(self.env.common_step_counter / self.num_env_step / self.cfg.curriculum_coeff)
++            count = torch.tensor(float(effective_step) / denom, device=self.device, dtype=torch.float32) # NEW
+             self.vel_command_b[env_ids, 0] = (r.uniform_(*self.cfg.ranges_init.lin_vel_x)) * torch.clamp((1 - count), 0, 1) + (r.uniform_(*self.cfg.ranges_final.lin_vel_x)) * torch.clamp(count, 0, 1)
+             self.vel_command_b[env_ids, 1] = (r.uniform_(*self.cfg.ranges_init.lin_vel_y)) * torch.clamp((1 - count), 0, 1) + (r.uniform_(*self.cfg.ranges_final.lin_vel_y)) * torch.clamp(count, 0, 1)
+             self.vel_command_b[env_ids, 2] = (r.uniform_(*self.cfg.ranges_init.ang_vel_z)) * torch.clamp((1 - count), 0, 1) + (r.uniform_(*self.cfg.ranges_final.ang_vel_z)) * torch.clamp(count, 0, 1)
+@@ -155,6 +169,8 @@ class UniformVelocityCommand(CommandTerm):
+         This function sets velocity command to zero for standing environments and computes angular
+         velocity from heading direction if the heading_command flag is set.
+         """
++        warmup_hold_go1_leg_pose(self.env)
++
+         # Compute angular velocity from heading direction
+         if self.cfg.heading_command:
+             # resolve indices of heading envs

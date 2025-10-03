@@ -1,7 +1,5 @@
 # pd_control.py
 import os
-os.environ["MUJOCO_GL"] = "egl"
-print("MUJOCO_GL =", os.environ.get("MUJOCO_GL"))
 import mujoco
 from mujoco import viewer
 import numpy as np
@@ -30,9 +28,9 @@ arm_joints = [
     "widow_right_finger",
 ]
 
-# Gains (leg and arm can be slightly different if you like)
+# gains
 KP_LEG, KD_LEG = 60.0, 2.0
-KP_ARM, KD_ARM = 40.0, 1.5   # arm is lighter; lower gains are fine
+KP_ARM, KD_ARM = 40.0, 1.5
 
 def jid(name):  return mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, name)
 def aid(name):  return mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, name)
@@ -66,9 +64,52 @@ def pd_hold():
         q, qd = data.qpos[j_qadr[n]], data.qvel[j_dadr[n]]
         data.ctrl[act[n]] = KP_ARM*(qref - q) - KD_ARM*qd
 
-with viewer.launch_passive(model, data) as v:
-    start = time.time()
-    while v.is_running() and (time.time() - start) < 10.0:
-        pd_hold()
-        mujoco.mj_step(model, data)
+# pause/ exit
+paused = False
+step_once = False
+endSim = False
+
+# key codes for teleop
+GLFW_SPACE  = 32
+GLFW_S      = 83
+GLFW_ESCAPE = 256
+
+def key_listener(keycode):
+    global paused, step_once, endSim
+    if keycode == GLFW_SPACE:
+        paused = not paused
+        print("Paused:", paused)
+    elif keycode == GLFW_S:
+        step_once = True
+        print("Advanced one step")
+    elif keycode == GLFW_ESCAPE:
+        endSim = True
+        print("Exiting sim...")
+
+# performance readouts
+t0 = time.perf_counter()
+step_counter = 0
+report_every = 1.0  # seconds
+
+with viewer.launch_passive(model, data, key_callback=key_listener) as v:
+    while v.is_running() and not endSim:
+        if not paused:
+            pd_hold()
+            mujoco.mj_step(model, data)
+            step_counter += 1
+        else:
+            if step_once:
+                pd_hold()
+                mujoco.mj_step(model, data)
+                step_counter += 1
+                step_once = False
+
+        now = time.perf_counter()
+        dt = now - t0
+        if dt >= report_every:
+            hz = step_counter / dt
+            print(f"Sim: {hz:.1f} Hz")
+            step_counter = 0
+            t0 = now
+
         v.sync()

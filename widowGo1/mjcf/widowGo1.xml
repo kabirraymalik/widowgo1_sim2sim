@@ -272,33 +272,36 @@
   </worldbody>
 
   <actuator>
-    <!-- Arm motors (leave limits as before) -->
-    <motor name="widow_waist_ctrl"        joint="widow_waist"/>
-    <motor name="widow_shoulder_ctrl"     joint="widow_shoulder"/>
-    <motor name="widow_elbow_ctrl"        joint="widow_elbow"/>
-    <motor name="widow_forearm_roll_ctrl" joint="widow_forearm_roll"/>
-    <motor name="widow_wrist_angle_ctrl"  joint="widow_wrist_angle"/>
-    <motor name="widow_wrist_rotate_ctrl" joint="widow_wrist_rotate"/>
-    <motor name="widow_left_finger_ctrl"  joint="widow_left_finger"/>
-    <motor name="widow_right_finger_ctrl" joint="widow_right_finger"/>
+    <!-- Arm position servos (moderate kp) -->
+    <position name="widow_waist_pos"        joint="widow_waist"        kp="50"  ctrlrange="-3.1416 3.1416"/>
+    <position name="widow_shoulder_pos"     joint="widow_shoulder"     kp="60"  ctrlrange="-1.8849556 1.9896753"/>
+    <position name="widow_elbow_pos"        joint="widow_elbow"        kp="60"  ctrlrange="-2.14675498 1.60570291"/>
+    <position name="widow_forearm_roll_pos" joint="widow_forearm_roll" kp="40"  ctrlrange="-3.1416 3.1416"/>
+    <position name="widow_wrist_angle_pos"  joint="widow_wrist_angle"  kp="40"  ctrlrange="-1.74532925 2.14675498"/>
+    <position name="widow_wrist_rotate_pos" joint="widow_wrist_rotate" kp="40"  ctrlrange="-3.1416 3.1416"/>
 
-    <!-- Go1 leg torques -->
-    <motor name="FR_hip_joint_ctrl"   joint="FR_hip_joint"   forcerange="-23.7 23.7"/>
-    <motor name="FR_thigh_joint_ctrl" joint="FR_thigh_joint" forcerange="-23.7 23.7"/>
-    <motor name="FR_calf_joint_ctrl"  joint="FR_calf_joint"  forcerange="-35.55 35.55"/>
+    <!-- Optional: fingers, low kp (or comment out if unused) -->
+    <position name="widow_left_finger_pos"  joint="widow_left_finger"  kp="20"  ctrlrange="0.015 0.037"/>
+    <position name="widow_right_finger_pos" joint="widow_right_finger" kp="20"  ctrlrange="-0.037 -0.015"/>
 
-    <motor name="FL_hip_joint_ctrl"   joint="FL_hip_joint"   forcerange="-23.7 23.7"/>
-    <motor name="FL_thigh_joint_ctrl" joint="FL_thigh_joint" forcerange="-23.7 23.7"/>
-    <motor name="FL_calf_joint_ctrl"  joint="FL_calf_joint"  forcerange="-35.55 35.55"/>
+    <!-- Go1 legs position servos (higher kp) -->
+    <position name="FR_hip_joint_pos"   joint="FR_hip_joint"   kp="90"  ctrlrange="-0.863 0.863"/>
+    <position name="FR_thigh_joint_pos" joint="FR_thigh_joint" kp="110" ctrlrange="-0.686 4.501"/>
+    <position name="FR_calf_joint_pos"  joint="FR_calf_joint"  kp="130" ctrlrange="-2.818 -0.888"/>
 
-    <motor name="RR_hip_joint_ctrl"   joint="RR_hip_joint"   forcerange="-23.7 23.7"/>
-    <motor name="RR_thigh_joint_ctrl" joint="RR_thigh_joint" forcerange="-23.7 23.7"/>
-    <motor name="RR_calf_joint_ctrl"  joint="RR_calf_joint"  forcerange="-35.55 35.55"/>
+    <position name="FL_hip_joint_pos"   joint="FL_hip_joint"   kp="90"  ctrlrange="-0.863 0.863"/>
+    <position name="FL_thigh_joint_pos" joint="FL_thigh_joint" kp="110" ctrlrange="-0.686 4.501"/>
+    <position name="FL_calf_joint_pos"  joint="FL_calf_joint"  kp="130" ctrlrange="-2.818 -0.888"/>
 
-    <motor name="RL_hip_joint_ctrl"   joint="RL_hip_joint"   forcerange="-23.7 23.7"/>
-    <motor name="RL_thigh_joint_ctrl" joint="RL_thigh_joint" forcerange="-23.7 23.7"/>
-    <motor name="RL_calf_joint_ctrl"  joint="RL_calf_joint"  forcerange="-35.55 35.55"/>
+    <position name="RR_hip_joint_pos"   joint="RR_hip_joint"   kp="90"  ctrlrange="-0.863 0.863"/>
+    <position name="RR_thigh_joint_pos" joint="RR_thigh_joint" kp="110" ctrlrange="-0.686 4.501"/>
+    <position name="RR_calf_joint_pos"  joint="RR_calf_joint"  kp="130" ctrlrange="-2.818 -0.888"/>
+
+    <position name="RL_hip_joint_pos"   joint="RL_hip_joint"   kp="90"  ctrlrange="-0.863 0.863"/>
+    <position name="RL_thigh_joint_pos" joint="RL_thigh_joint" kp="110" ctrlrange="-0.686 4.501"/>
+    <position name="RL_calf_joint_pos"  joint="RL_calf_joint"  kp="130" ctrlrange="-2.818 -0.888"/>
   </actuator>
+
 
   <contact>
     <exclude body1="wx250s/base_link"        body2="wx250s/shoulder_link"/>
