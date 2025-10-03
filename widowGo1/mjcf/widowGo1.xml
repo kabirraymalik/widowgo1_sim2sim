@@ -1,0 +1,328 @@
+<mujoco model="widowGo1">
+  <compiler angle="radian"/>
+  <option cone="elliptic" impratio="100"/>
+
+  <default>
+    <default class="robot">
+      <default class="motor">
+        <joint />
+        <motor />
+      </default>
+      <!-- Go1-like joint stabilizers -->
+      <joint damping="2" armature="0.01" frictionloss="0.2"/>
+
+      <!-- Visuals: render-only, group 0 -->
+      <default class="visual">
+        <geom contype="0" conaffinity="0" group="0"/>
+      </default>
+
+      <!-- Collisions: physics-only, group 3 (transparent by default) -->
+      <default class="collision">
+        <geom material="collision_material" group="3"
+              contype="1" conaffinity="1"
+              margin="0.001" condim="1" priority="1"
+              friction="0.6 0.02 0.01"/>
+      </default>
+    </default>
+  </default>
+
+  <asset>
+    <material name="black"  rgba="0.0 0.0 0.0 1.0"/>
+    <material name="blue"   rgba="0.0 0.0 0.8 1.0"/>
+    <material name="green"  rgba="0.0 0.8 0.0 1.0"/>
+    <material name="grey"   rgba="0.2 0.2 0.2 1.0"/>
+    <material name="silver" rgba="0.9137 0.9137 0.8471 1.0"/>
+    <material name="orange" rgba="1.0 0.4235 0.0392 1.0"/>
+    <material name="brown"  rgba="0.8706 0.8118 0.7647 1.0"/>
+    <material name="red"    rgba="0.8 0.0 0.0 1.0"/>
+    <material name="white"  rgba="1.0 1.0 1.0 1.0"/>
+    <material name="default_material"   rgba="0.7 0.7 0.7 1"/>
+    <!-- Make collisions translucent so visuals show by default -->
+    <material name="collision_material" rgba="1.0 0.28 0.1 0.12"/>
+
+    <!-- WidowX meshes -->
+    <mesh name="wx250s_1_base"            file="../meshes/wx250s_meshes/wx250s_1_base.stl"           scale="0.001 0.001 0.001"/>
+    <mesh name="wx250s_2_shoulder"        file="../meshes/wx250s_meshes/wx250s_2_shoulder.stl"       scale="0.001 0.001 0.001"/>
+    <mesh name="wx250s_3_upper_arm"       file="../meshes/wx250s_meshes/wx250s_3_upper_arm.stl"      scale="0.001 0.001 0.001"/>
+    <mesh name="wx250s_4_upper_forearm"   file="../meshes/wx250s_meshes/wx250s_4_upper_forearm.stl"  scale="0.001 0.001 0.001"/>
+    <mesh name="wx250s_5_lower_forearm"   file="../meshes/wx250s_meshes/wx250s_5_lower_forearm.stl"  scale="0.001 0.001 0.001"/>
+    <mesh name="wx250s_6_wrist"           file="../meshes/wx250s_meshes/wx250s_6_wrist.stl"          scale="0.001 0.001 0.001"/>
+    <mesh name="wx250s_7_gripper"         file="../meshes/wx250s_meshes/wx250s_7_gripper.stl"        scale="0.001 0.001 0.001"/>
+    <mesh name="wx250s_8_gripper_prop"    file="../meshes/wx250s_meshes/wx250s_8_gripper_prop.stl"   scale="0.001 0.001 0.001"/>
+    <mesh name="wx250s_9_gripper_bar"     file="../meshes/wx250s_meshes/wx250s_9_gripper_bar.stl"    scale="0.001 0.001 0.001"/>
+    <mesh name="wx250s_10_gripper_finger" file="../meshes/wx250s_meshes/wx250s_10_gripper_finger.stl" scale="0.001 0.001 0.001"/>
+
+    <!-- Go1 meshes -->
+    <mesh name="trunk"        file="../meshes/trunk.stl"        scale="1.0 1.0 1.0"/>
+    <mesh name="hip"          file="../meshes/hip.stl"          scale="1.0 1.0 1.0"/>
+    <mesh name="thigh_mirror" file="../meshes/thigh_mirror.stl" scale="1.0 1.0 1.0"/>
+    <mesh name="calf"         file="../meshes/calf.stl"         scale="1.0 1.0 1.0"/>
+    <mesh name="thigh"        file="../meshes/thigh.stl"        scale="1.0 1.0 1.0"/>
+  </asset>
+
+  <worldbody>
+    <!-- Floating base that carries the arm -->
+    <body name="base" pos="0 0 0.446" quat="1 0 0 0" childclass="robot">
+      <freejoint name="floating_base"/>
+      <geom name="base_visual" pos="0 0 0" quat="1 0 0 0" material="default_material" type="box" size="0.0005 0.0005 0.0005" class="visual"/>
+
+      <!-- WidowX arm (unchanged geometry; benefits from new joint defaults) -->
+      <body name="wx250s/base_link" pos="0.03 0 0.057" quat="1 0 0 0">
+        <inertial pos="-0.0380446 0.000613892 0.0193354" quat="0.7071067812 0 0 0.7071067812" mass="0.538736" diaginertia="0.002115 0.0006921 0.002524"/>
+        <geom name="wx250s/base_link_collision" pos="0 0 0" quat="0.7071067812 0 0 0.7071067812" type="mesh" mesh="wx250s_1_base" class="collision"/>
+        <geom name="wx250s/base_link_visual"    pos="0 0 0" quat="0.7071067812 0 0 0.7071067812" material="black" type="mesh" mesh="wx250s_1_base" class="visual"/>
+
+        <body name="wx250s/shoulder_link" pos="0 0 0.072" quat="1 0 0 0">
+          <joint name="widow_waist" type="hinge" ref="0.0" class="motor" axis="0 0 1"/>
+          <inertial pos="0.0000223482 0.0000414609 0.0066287" quat="0.7071067812 0 0 0.7071067812" mass="0.480879" diaginertia="0.000379 0.0005557 0.0005889"/>
+          <geom name="wx250s/shoulder_link_collision" pos="0 0 -0.003" quat="0.7071067812 0 0 0.7071067812" type="mesh" mesh="wx250s_2_shoulder" class="collision"/>
+          <geom name="wx250s/shoulder_link_visual"    pos="0 0 -0.003" quat="0.7071067812 0 0 0.7071067812" material="black" type="mesh" mesh="wx250s_2_shoulder" class="visual"/>
+
+          <body name="wx250s/upper_arm_link" pos="0 0 0.03865" quat="1 0 0 0">
+            <joint name="widow_shoulder" type="hinge" ref="0.0" class="motor" range="-1.8849555921538759 1.9896753472735358" axis="0 1 0"/>
+            <inertial pos="0.0171605 0.0000002725 0.191323" quat="0.7071067812 0 0 0.7071067812" mass="0.430811" diaginertia="0.003463 0.003587 0.0004566"/>
+            <geom name="wx250s/upper_arm_link_collision" pos="0 0 0" quat="0.7071067812 0 0 0.7071067812" type="mesh" mesh="wx250s_3_upper_arm" class="collision"/>
+            <geom name="wx250s/upper_arm_link_visual"    pos="0 0 0" quat="0.7071067812 0 0 0.7071067812" material="black" type="mesh" mesh="wx250s_3_upper_arm" class="visual"/>
+
+            <body name="wx250s/upper_forearm_link" pos="0.04975 0 0.25" quat="1 0 0 0">
+              <joint name="widow_elbow" type="hinge" ref="0.0" class="motor" range="-2.1467549799530254 1.6057029118347832" axis="0 1 0"/>
+              <inertial pos="0.107963 0.000115876 0" quat="1 0 0 0" mass="0.234589" diaginertia="3.971e-05 0.0008878 0.000888"/>
+              <geom name="wx250s/upper_forearm_link_collision" pos="0 0 0" quat="1 0 0 0" type="mesh" mesh="wx250s_4_upper_forearm" class="collision"/>
+              <geom name="wx250s/upper_forearm_link_visual"    pos="0 0 0" quat="1 0 0 0" material="black" type="mesh" mesh="wx250s_4_upper_forearm" class="visual"/>
+
+              <body name="wx250s/lower_forearm_link" pos="0.175 0 0" quat="1 0 0 0">
+                <joint name="widow_forearm_roll" type="hinge" ref="0.0" class="motor" range="-3.141582653589793 3.141582653589793" axis="1 0 0"/>
+                <inertial pos="0.0374395 0.00522252 0" quat="0 1 0 0" mass="0.220991" diaginertia="6.369e-05 0.0001677 0.0001834"/>
+                <geom name="wx250s/lower_forearm_link_collision" pos="0 0 0" quat="0 1 0 0" type="mesh" mesh="wx250s_5_lower_forearm" class="collision"/>
+                <geom name="wx250s/lower_forearm_link_visual"    pos="0 0 0" quat="0 1 0 0" material="black" type="mesh" mesh="wx250s_5_lower_forearm" class="visual"/>
+
+                <body name="wx250s/wrist_link" pos="0.075 0 0" quat="1 0 0 0">
+                  <joint name="widow_wrist_angle" type="hinge" ref="0.0" class="motor" range="-1.7453292519943295 2.1467549799530254" axis="0 1 0"/>
+                  <inertial pos="0.04236 -0.000010663 0.010577" quat="0.7071067812 0 0 0.7071067812" mass="0.084957" diaginertia="3.082e-05 2.822e-05 3.152e-05"/>
+                  <geom name="wx250s/wrist_link_collision" pos="0 0 0" quat="0.7071067812 0 0 0.7071067812" type="mesh" mesh="wx250s_6_wrist" class="collision"/>
+                  <geom name="wx250s/wrist_link_visual"    pos="0 0 0" quat="0.7071067812 0 0 0.7071067812" material="black" type="mesh" mesh="wx250s_6_wrist" class="visual"/>
+
+                  <body name="wx250s/gripper_link" pos="0.065 0 0" quat="1 0 0 0">
+                    <joint name="widow_wrist_rotate" type="hinge" ref="0.0" class="motor" range="-3.141582653589793 3.141582653589793" axis="1 0 0"/>
+                    <inertial pos="0.021631 0.0000002516 0.01141" quat="0.7071067812 0 0 0.7071067812" mass="0.072885" diaginertia="2.537e-05 1.836e-05 1.674e-05"/>
+                    <geom name="wx250s/gripper_link_collision" pos="-0.02 0 0" quat="0.7071067812 0 0 0.7071067812" type="mesh" mesh="wx250s_7_gripper" class="collision"/>
+                    <geom name="wx250s/gripper_link_visual"    pos="-0.02 0 0" quat="0.7071067812 0 0 0.7071067812" material="black" type="mesh" mesh="wx250s_7_gripper" class="visual"/>
+
+                    <body name="wx250s/ee_arm_link" pos="0.043 0 0" quat="1 0 0 0">
+                      <inertial pos="0 0 0" quat="1 0 0 0" mass="0.02" diaginertia="2e-05 2e-05 2e-05"/>
+                      <body name="wx250s/gripper_prop_link" pos="0.0055 0 0" quat="1 0 0 0">
+                        <inertial pos="0.000846 -0.0000016817 0.000042" quat="0.7071067812 0 0 0.7071067812" mass="0.00434" diaginertia="5.923e-07 1.1156e-06 5.743e-07"/>
+                        <geom name="wx250s/gripper_prop_link_collision" pos="-0.0685 0 0" quat="0.7071067812 0 0 0.7071067812" type="mesh" mesh="wx250s_8_gripper_prop" class="collision"/>
+                        <geom name="wx250s/gripper_prop_link_visual"    pos="-0.0685 0 0" quat="0.7071067812 0 0 0.7071067812" material="black" type="mesh" mesh="wx250s_8_gripper_prop" class="visual"/>
+                      </body>
+                      <body name="wx250s/gripper_bar_link" pos="0 0 0" quat="1 0 0 0">
+                        <inertial pos="0.009687 0.0000008177 0.004962" quat="0.7071067812 0 0 0.7071067812" mass="0.034199" diaginertia="7.4125e-06 2.843e-05 2.86e-05"/>
+                        <geom name="wx250s/gripper_bar_link_collision" pos="-0.063 0 0" quat="0.7071067812 0 0 0.7071067812" type="mesh" mesh="wx250s_9_gripper_bar" class="collision"/>
+                        <geom name="wx250s/gripper_bar_link_visual"    pos="-0.063 0 0" quat="0.7071067812 0 0 0.7071067812" material="black" type="mesh" mesh="wx250s_9_gripper_bar" class="visual"/>
+
+                        <body name="wx250s/fingers_link" pos="0.023 0 0" quat="1 0 0 0">
+                          <inertial pos="0 0 0" quat="1 0 0 0" mass="0.02" diaginertia="2e-05 2e-05 2e-05"/>
+
+                          <body name="wx250s/left_finger_link" pos="0 0 0" quat="1 0 0 0">
+                            <joint name="widow_left_finger" type="slide" ref="0.0" class="motor" range="0.015 0.037" axis="0 1 0"/>
+                            <inertial pos="0.013816 0 0" quat="0.7071067812 0 0 -0.7071067812" mass="0.016246" diaginertia="4.731e-06 1.5506e-06 3.7467e-06"/>
+                            <geom name="wx250s/left_finger_link_collision" pos="0 0.005 0" quat="0 6.123233995736766e-17 6.123233995736766e-17 -1" type="mesh" mesh="wx250s_10_gripper_finger" class="collision"/>
+                            <geom name="wx250s/left_finger_link_visual"    pos="0 0.005 0" quat="0 6.123233995736766e-17 6.123233995736766e-17 -1" material="black" type="mesh" mesh="wx250s_10_gripper_finger" class="visual"/>
+                          </body>
+
+                          <body name="wx250s/right_finger_link" pos="0 0 0" quat="1 0 0 0">
+                            <joint name="widow_right_finger" type="slide" ref="0.0" class="motor" range="-0.037 -0.015" axis="0 1 0"/>
+                            <inertial pos="0.013816 0 0" quat="4.329780281177467e-17 -0.7071067812 0.7071067812 4.329780281177466e-17" mass="0.016246" diaginertia="4.731e-06 1.5506e-06 3.7467e-06"/>
+                            <geom name="wx250s/right_finger_link_collision" pos="0 -0.005 0" quat="6.123233995736766e-17 0 1 0" type="mesh" mesh="wx250s_10_gripper_finger" class="collision"/>
+                            <geom name="wx250s/right_finger_link_visual"    pos="0 -0.005 0" quat="6.123233995736766e-17 0 1 0" material="black" type="mesh" mesh="wx250s_10_gripper_finger" class="visual"/>
+                          </body>
+
+                          <body name="wx250s/ee_gripper_link" pos="0.027575 0 0" quat="1 0 0 0">
+                            <inertial pos="0 0 0" quat="1 0 0 0" mass="0.02" diaginertia="2e-05 2e-05 2e-05"/>
+                          </body>
+                        </body>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+
+      <!-- Go1 trunk + legs -->
+      <body name="trunk" pos="0 0 0" quat="1 0 0 0">
+        <inertial pos="0.0223 0.002 -0.0005" quat="1 0 0 0" mass="5.204" diaginertia="0.0168352186 0.0656071082 0.0742720659"/>
+        <geom name="trunk_collision" pos="0 0 0" type="box" size="0.1881 0.04675 0.057" class="collision"/>
+        <geom name="trunk_visual"    pos="0 0 0" material="silver" type="mesh" mesh="trunk" class="visual"/>
+
+        <body name="imu_link" pos="-0.01592 -0.06659 -0.00617">
+          <inertial pos="0 0 0" mass="0.02" diaginertia="2e-05 2e-05 2e-05"/>
+          <geom name="imu_link_collision" type="box" size="0.0005 0.0005 0.0005" class="collision"/>
+          <geom name="imu_link_visual"    type="box" size="0.0005 0.0005 0.0005" class="visual" material="default_material"/>
+        </body>
+
+        <!-- FR -->
+        <body name="FR_hip" pos="0.1881 -0.04675 0">
+          <joint name="FR_hip_joint" type="hinge" axis="1 0 0" range="-0.863 0.863" class="motor"/>
+          <inertial pos="-0.00541 0.00074 0.000006" mass="0.68" diaginertia="0.000734064 0.000468438 0.000398719"/>
+          <geom name="FR_hip_visual" type="mesh" mesh="hip" class="visual"/>
+          <body name="FR_thigh" pos="0 -0.08 0">
+            <joint name="FR_thigh_joint" type="hinge" axis="0 1 0" range="-0.686 4.501" class="motor"/>
+            <inertial pos="-0.003468 0.018947 -0.032736" mass="1.009" diaginertia="0.00478717 0.00460903 0.000709268"/>
+            <geom name="FR_thigh_collision" pos="0 0 -0.1065" quat="0.7071067811882787 0 0.7071067811848163 0" type="box" size="0.1065 0.01225 0.017" class="collision"/>
+            <geom name="FR_thigh_visual"    type="mesh" mesh="thigh_mirror" class="visual" material="silver"/>
+            <body name="FR_calf" pos="0 0 -0.213">
+              <joint name="FR_calf_joint" type="hinge" axis="0 1 0" range="-2.818 -0.888" class="motor"/>
+              <inertial pos="0.006286 0.001307 -0.122269" mass="0.195862" diaginertia="0.00149767 0.00148468 3.58427e-05"/>
+              <geom name="FR_calf_collision" pos="0 0 -0.1065" quat="0.7071067811882787 0 0.7071067811848163 0" type="box" size="0.1065 0.008 0.008" class="collision"/>
+              <geom name="FR_calf_visual"    type="mesh" mesh="calf" class="visual" material="silver"/>
+              <body name="FR_foot" pos="0 0 -0.213">
+                <inertial pos="0 0 0" mass="0.06" diaginertia="9.6e-06 9.6e-06 9.6e-06"/>
+                <!-- Go1-style foot contact -->
+                <geom name="FR_foot_collision" type="sphere" size="0.023"
+                      condim="6" priority="1" solimp="0.015 1 0.023" friction="0.8 0.02 0.01" class="collision"/>
+                <geom name="FR_foot_visual" type="sphere" size="0.01" class="visual" material="black"/>
+              </body>
+            </body>
+          </body>
+        </body>
+
+        <!-- FL -->
+        <body name="FL_hip" pos="0.1881 0.04675 0">
+          <joint name="FL_hip_joint" type="hinge" axis="1 0 0" range="-0.863 0.863" class="motor"/>
+          <inertial pos="-0.00541 -0.00074 0.000006" mass="0.68" diaginertia="0.000734064 0.000468438 0.000398719"/>
+          <geom name="FL_hip_visual" type="mesh" mesh="hip" class="visual"/>
+          <body name="FL_thigh" pos="0 0.08 0">
+            <joint name="FL_thigh_joint" type="hinge" axis="0 1 0" range="-0.686 4.501" class="motor"/>
+            <inertial pos="-0.003468 -0.018947 -0.032736" mass="1.009" diaginertia="0.00478717 0.00460903 0.000709268"/>
+            <geom name="FL_thigh_collision" pos="0 0 -0.1065" quat="0.7071067811882787 0 0.7071067811848163 0" type="box" size="0.1065 0.01225 0.017" class="collision"/>
+            <geom name="FL_thigh_visual"    type="mesh" mesh="thigh" class="visual" material="silver"/>
+            <body name="FL_calf" pos="0 0 -0.213">
+              <joint name="FL_calf_joint" type="hinge" axis="0 1 0" range="-2.818 -0.888" class="motor"/>
+              <inertial pos="0.006286 0.001307 -0.122269" mass="0.195862" diaginertia="0.00149767 0.00148468 3.58427e-05"/>
+              <geom name="FL_calf_collision" pos="0 0 -0.1065" quat="0.7071067811882787 0 0.7071067811848163 0" type="box" size="0.1065 0.008 0.008" class="collision"/>
+              <geom name="FL_calf_visual"    type="mesh" mesh="calf" class="visual" material="silver"/>
+              <body name="FL_foot" pos="0 0 -0.213">
+                <inertial pos="0 0 0" mass="0.06" diaginertia="9.6e-06 9.6e-06 9.6e-06"/>
+                <geom name="FL_foot_collision" type="sphere" size="0.023"
+                      condim="6" priority="1" solimp="0.015 1 0.023" friction="0.8 0.02 0.01" class="collision"/>
+                <geom name="FL_foot_visual" type="sphere" size="0.01" class="visual" material="black"/>
+              </body>
+            </body>
+          </body>
+        </body>
+
+        <!-- RR -->
+        <body name="RR_hip" pos="-0.1881 -0.04675 0">
+          <joint name="RR_hip_joint" type="hinge" axis="1 0 0" range="-0.863 0.863" class="motor"/>
+          <inertial pos="0.00541 0.00074 0.000006" mass="0.68" diaginertia="0.000734064 0.000468438 0.000398719"/>
+          <geom name="RR_hip_visual" type="mesh" mesh="hip" class="visual"/>
+          <body name="RR_thigh" pos="0 -0.08 0">
+            <joint name="RR_thigh_joint" type="hinge" axis="0 1 0" range="-0.686 4.501" class="motor"/>
+            <inertial pos="-0.003468 0.018947 -0.032736" mass="1.009" diaginertia="0.00478717 0.00460903 0.000709268"/>
+            <geom name="RR_thigh_collision" pos="0 0 -0.1065" quat="0.7071067811882787 0 0.7071067811848163 0" type="box" size="0.1065 0.01225 0.017" class="collision"/>
+            <geom name="RR_thigh_visual"    type="mesh" mesh="thigh_mirror" class="visual" material="silver"/>
+            <body name="RR_calf" pos="0 0 -0.213">
+              <joint name="RR_calf_joint" type="hinge" axis="0 1 0" range="-2.818 -0.888" class="motor"/>
+              <inertial pos="0.006286 0.001307 -0.122269" mass="0.195862" diaginertia="0.00149767 0.00148468 3.58427e-05"/>
+              <geom name="RR_calf_collision" pos="0 0 -0.1065" quat="0.7071067811882787 0 0.7071067811848163 0" type="box" size="0.1065 0.008 0.008" class="collision"/>
+              <geom name="RR_calf_visual"    type="mesh" mesh="calf" class="visual" material="silver"/>
+              <body name="RR_foot" pos="0 0 -0.213">
+                <inertial pos="0 0 0" mass="0.06" diaginertia="9.6e-06 9.6e-06 9.6e-06"/>
+                <geom name="RR_foot_collision" type="sphere" size="0.023"
+                      condim="6" priority="1" solimp="0.015 1 0.023" friction="0.8 0.02 0.01" class="collision"/>
+                <geom name="RR_foot_visual" type="sphere" size="0.01" class="visual" material="black"/>
+              </body>
+            </body>
+          </body>
+        </body>
+
+        <!-- RL -->
+        <body name="RL_hip" pos="-0.1881 0.04675 0">
+          <joint name="RL_hip_joint" type="hinge" axis="1 0 0" range="-0.863 0.863" class="motor"/>
+          <inertial pos="0.00541 -0.00074 0.000006" mass="0.68" diaginertia="0.000734064 0.000468438 0.000398719"/>
+          <geom name="RL_hip_visual" type="mesh" mesh="hip" class="visual"/>
+          <body name="RL_thigh" pos="0 0.08 0">
+            <joint name="RL_thigh_joint" type="hinge" axis="0 1 0" range="-0.686 4.501" class="motor"/>
+            <inertial pos="-0.003468 -0.018947 -0.032736" mass="1.009" diaginertia="0.00478717 0.00460903 0.000709268"/>
+            <geom name="RL_thigh_collision" pos="0 0 -0.1065" quat="0.7071067811882787 0 0.7071067811848163 0" type="box" size="0.1065 0.01225 0.017" class="collision"/>
+            <geom name="RL_thigh_visual"    type="mesh" mesh="thigh" class="visual" material="silver"/>
+            <body name="RL_calf" pos="0 0 -0.213">
+              <joint name="RL_calf_joint" type="hinge" axis="0 1 0" range="-2.818 -0.888" class="motor"/>
+              <inertial pos="0.006286 0.001307 -0.122269" mass="0.195862" diaginertia="0.00149767 0.00148468 3.58427e-05"/>
+              <geom name="RL_calf_collision" pos="0 0 -0.1065" quat="0.7071067811882787 0 0.7071067811848163 0" type="box" size="0.1065 0.008 0.008" class="collision"/>
+              <geom name="RL_calf_visual"    type="mesh" mesh="calf" class="visual" material="silver"/>
+              <body name="RL_foot" pos="0 0 -0.213">
+                <inertial pos="0 0 0" mass="0.06" diaginertia="9.6e-06 9.6e-06 9.6e-06"/>
+                <geom name="RL_foot_collision" type="sphere" size="0.023"
+                      condim="6" priority="1" solimp="0.015 1 0.023" friction="0.8 0.02 0.01" class="collision"/>
+                <geom name="RL_foot_visual" type="sphere" size="0.01" class="visual" material="black"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+
+      <site name="base_site" pos="0 0 0" quat="1 0 0 0"/>
+      <camera name="front_camera" mode="track" fovy="90" quat="4.329780281177467e-17 4.329780281177466e-17 0.7071067811865475 0.7071067811865476" pos="0 2 0.5"/>
+      <camera name="side_camera"  mode="track" fovy="90" quat="-0.5 -0.4999999999999999 0.5 0.5000000000000001" pos="-2 0 0.5"/>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <!-- Arm motors (leave limits as before) -->
+    <motor name="widow_waist_ctrl"        joint="widow_waist"/>
+    <motor name="widow_shoulder_ctrl"     joint="widow_shoulder"/>
+    <motor name="widow_elbow_ctrl"        joint="widow_elbow"/>
+    <motor name="widow_forearm_roll_ctrl" joint="widow_forearm_roll"/>
+    <motor name="widow_wrist_angle_ctrl"  joint="widow_wrist_angle"/>
+    <motor name="widow_wrist_rotate_ctrl" joint="widow_wrist_rotate"/>
+    <motor name="widow_left_finger_ctrl"  joint="widow_left_finger"/>
+    <motor name="widow_right_finger_ctrl" joint="widow_right_finger"/>
+
+    <!-- Go1 leg torques -->
+    <motor name="FR_hip_joint_ctrl"   joint="FR_hip_joint"   forcerange="-23.7 23.7"/>
+    <motor name="FR_thigh_joint_ctrl" joint="FR_thigh_joint" forcerange="-23.7 23.7"/>
+    <motor name="FR_calf_joint_ctrl"  joint="FR_calf_joint"  forcerange="-35.55 35.55"/>
+
+    <motor name="FL_hip_joint_ctrl"   joint="FL_hip_joint"   forcerange="-23.7 23.7"/>
+    <motor name="FL_thigh_joint_ctrl" joint="FL_thigh_joint" forcerange="-23.7 23.7"/>
+    <motor name="FL_calf_joint_ctrl"  joint="FL_calf_joint"  forcerange="-35.55 35.55"/>
+
+    <motor name="RR_hip_joint_ctrl"   joint="RR_hip_joint"   forcerange="-23.7 23.7"/>
+    <motor name="RR_thigh_joint_ctrl" joint="RR_thigh_joint" forcerange="-23.7 23.7"/>
+    <motor name="RR_calf_joint_ctrl"  joint="RR_calf_joint"  forcerange="-35.55 35.55"/>
+
+    <motor name="RL_hip_joint_ctrl"   joint="RL_hip_joint"   forcerange="-23.7 23.7"/>
+    <motor name="RL_thigh_joint_ctrl" joint="RL_thigh_joint" forcerange="-23.7 23.7"/>
+    <motor name="RL_calf_joint_ctrl"  joint="RL_calf_joint"  forcerange="-35.55 35.55"/>
+  </actuator>
+
+  <contact>
+    <exclude body1="wx250s/base_link"        body2="wx250s/shoulder_link"/>
+    <exclude body1="wx250s/shoulder_link"    body2="wx250s/upper_arm_link"/>
+    <exclude body1="wx250s/upper_arm_link"   body2="wx250s/upper_forearm_link"/>
+    <exclude body1="wx250s/upper_forearm_link" body2="wx250s/lower_forearm_link"/>
+    <exclude body1="wx250s/lower_forearm_link" body2="wx250s/wrist_link"/>
+    <exclude body1="wx250s/wrist_link"       body2="wx250s/gripper_link"/>
+    <exclude body1="trunk"                    body2="imu_link"/>
+    <exclude body1="FR_thigh" body2="FR_calf"/>
+    <exclude body1="FR_calf"  body2="FR_foot"/>
+    <exclude body1="FL_thigh" body2="FL_calf"/>
+    <exclude body1="FL_calf"  body2="FL_foot"/>
+    <exclude body1="RR_thigh" body2="RR_calf"/>
+    <exclude body1="RR_calf"  body2="RR_foot"/>
+    <exclude body1="RL_thigh" body2="RL_calf"/>
+    <exclude body1="RL_calf"  body2="RL_foot"/>
+  </contact>
+
+  <sensor>
+    <framepos    name="base_site_pos"   objtype="site" objname="base_site"/>
+    <framequat   name="base_site_quat"  objtype="site" objname="base_site"/>
+    <framelinvel name="base_site_linvel" objtype="site" objname="base_site"/>
+    <frameangvel name="base_site_angvel" objtype="site" objname="base_site"/>
+    <velocimeter name="base_site_vel"   site="base_site"/>
+  </sensor>
+</mujoco>
