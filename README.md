@@ -31,3 +31,7 @@ Test widowGo1 xml model with pd control:
 ```
 python pd_control.py
 ```
+
+#### Training code
+
+To train this robot in IsaacSim, please see [go1_arm_lab](https://github.com/kabirraymalik/go1_arm_lab)
